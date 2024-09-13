@@ -40,7 +40,8 @@ coco_filename_6 = 'fiducial_11_11_6.h5' # CO + CO
 oho_filename_6 = 'fiducial_12_10_12_6.h5' #ONe + X
 
 
-'''File names for in-situ halo and high-alpha disk (thick disk)'''
+'''File names for in-situ halo (bulge-like) and high-alpha disk (thick disk)'''
+
 #metallicity bin 10, corresponding to 0.02
 hh_filename_10 = 'fiducial_10_10_10.h5'
 coh_filename_10 = 'fiducial_11_10_10.h5'
@@ -61,6 +62,7 @@ M_GSE_halo = 6 * 10**8 * u.Msun #from Han, 2022
 
 age_GSE_halo = 10 * 1e9 * u.yr
 
+
 '''In situ Halo information'''
 
 M_fiducial_halo = 1.4 * 10**9 * u.Msun #from Deason, 2019
@@ -69,19 +71,18 @@ M_in_situ_halo = M_fiducial_halo - M_GSE_halo
 
 age_in_situ_halo = 14 * 1e9 * u.yr #all formed in one burst according to Robin, 2003
 
-
 '''Thin disk information''' #McMillan, 2011
 
 cen_surf_dens_thin = 816.6
 R_d_thin = 2900
 M_disk_thin = 2*np.pi * cen_surf_dens_thin * R_d_thin**2 *u.Msun 
 
-
 '''Thick disk information''' #McMillan, 2011
 
 cen_surf_dens_thick = 209.5
 R_d_thick = 3310
 M_disk_thick = 2*np.pi * cen_surf_dens_thick * R_d_thick**2 *u.Msun
+
 age_thick_disk = 11 * 1e9 * u.yr #all formed in one burst according to Robin, 2003
 
 '''Bulge information''' #McMillan, 2011
@@ -91,11 +92,11 @@ M_bulge = 8.9 * 10**9 * u.Msun #McMillan, 2011
 age_bulge = 10 * 1e9 * u.yr #all formed in one burst according to Robin, 2003
 
 
+
 '''Evolution times'''
 
 #Calculates all gravitational evolution times given the time elapsed since enterred ZAMS
 
-#Calculates all gravitational evolution times given the time elapsed since enterred ZAMS
 def t_grav_evol(component, timeelapsed, n): 
     if component == 'thin disk': #Thin disk binaries did not form in one burst
         birth = np.random.uniform(0, 10, n) * 1e9 * u.yr
@@ -103,10 +104,13 @@ def t_grav_evol(component, timeelapsed, n):
     else:
         if component == 'thick disk':
             age_component =  age_thick_disk
+
         if component == 'bulge':
             age_component = age_bulge
+            
         if component == 'in situ halo':
             age_component =  age_in_situ_halo
+
         if component == 'GSE halo':
             age_component = age_GSE_halo 
         birth = np.random.uniform(age_component.value - 1e9 , age_component.value,n)
@@ -114,10 +118,10 @@ def t_grav_evol(component, timeelapsed, n):
         
     return tgrav.value, birth
 
-
 #Calculates all gravitational evolution times for given fiducial model
 def findtimes(d, component):
     tg, age = t_grav_evol(component, d['tphys'].values, len(d))
+
     d["tgrav_ev"] = tg 
     d['age']= age
     
@@ -226,6 +230,7 @@ p = 0.81
 q = 0.73
 
 def halo_dens(R_flattened, alpha1, alpha2, alpha3, radbreak1, radbreak2):
+        
         #First break radius
 
         if 6.0 <= R_flattened < radbreak1:
@@ -247,10 +252,11 @@ def halo_dens(R_flattened, alpha1, alpha2, alpha3, radbreak1, radbreak2):
 def triax_halo(numsamples, p, q, radbreak1, radbreak2, alpha1, alpha2, alpha3):
     l = []
     
+
     x_list = []
     y_list =[]
     z_list = []
-    
+
     yaw = -24.33 # azimuthal angle, about z-axis
     pitch = -25.39 #tilt, relative to plane
     
@@ -259,7 +265,7 @@ def triax_halo(numsamples, p, q, radbreak1, radbreak2, alpha1, alpha2, alpha3):
     while len(l) < numsamples:
         
         # Sample uniformly within a bounding box that encompasses the prolate spheroid
-        
+
         x = np.random.uniform(-60, 60, numsamples)
         y = np.random.uniform(-60, 60, numsamples)
         z = np.random.uniform(-60, 60, numsamples)
@@ -295,7 +301,7 @@ def triax_halo(numsamples, p, q, radbreak1, radbreak2, alpha1, alpha2, alpha3):
         
     l = list(zip(x_list, y_list, z_list))
         
-    return l 
+    return np.array(l)
 
 
 ''' 
@@ -340,10 +346,6 @@ def coords_sphere_ruiter(num_samples):
     
     l = np.array(l)
     
-    #import pdb
-    
-    #pdb.set_trace()
-    
     return l[0:num_samples]
 
 ''' 
@@ -362,6 +364,7 @@ def coords_sphere(cx, cy,cz, num_samples, rmin, rmax, epsilon):
         l.append((x,y,z))
             
     return l
+
 
 '''Disk Distribution, McMillan 2011'''
 
@@ -384,6 +387,8 @@ def disk_pos(numsamples, z_d, R_d, cen_surf_dens):
     
     return np.array(l)
 
+
+
 '''Returns points on the bulge based on McMillan 2011, using rejection sampling'''
 alpha = 1.8
 r_naught = 0.075
@@ -394,7 +399,7 @@ r_vals = np.linspace(0,10,num=500) #range?
 z_vals = np.linspace(-5,5,num=500) 
 
 
-def bulge(numsamples):
+def in_situ_halo_pos(numsamples):
     
     l = []
     
@@ -414,7 +419,6 @@ def bulge(numsamples):
                 l.append((x,y,z))
             
     return l[0:numsamples] 
-
 
 
 '''CALCULATING STRAIN, SNR, AND CHIRP MASS'''
@@ -446,6 +450,18 @@ def calc_strain(selected_DWDs, component):
         setoff_pos = pos - np.array([8,0,0]) #positions relative to the su
     
     #print statement
+
+'''CALCULATING STRAIN, SNR, AND CHIRP MASS'''
+
+#First, calculate strain to add to database
+def calc_strain(selected_DWDs):
+    
+    n = len(selected_DWDs)
+   
+    pos = disk_pos(n,0.3, 2.6, 816.6)
+                        
+    setoff_pos = pos - np.array([8,0,0]) #positions relative to the sun
+    
     m_1 =  selected_DWDs['mass_1'].values *u.Msun
     
     m_2 = selected_DWDs['mass_2'].values * u.Msun
@@ -458,8 +474,9 @@ def calc_strain(selected_DWDs, component):
     dist = np.linalg.norm(setoff_pos, axis=1) * u.kpc #luminosity distances
 
     sources = source.Source(m_1=m_1, m_2=m_2, ecc=ecc, dist=dist, f_orb=f_orb_f)
+
     h_0_n = sources.get_h_0_n(harmonics=2) #unsure about harmonics here
-    
+
     selected_DWDs['strain'] = h_0_n
 
     return selected_DWDs
@@ -495,15 +512,15 @@ def calc_SNR(selected_DWDs, component):
     if component == "GSE halo":
         pos = triax_halo(n, p, q, radbreak1, radbreak2, alpha1, alpha2, alpha3)
         setoff_pos = pos - np.array([8,0,0]) #positions relative to the sun
-        
+
     elif component == 'thin disk':
         pos = disk_pos(n, 0.3, 2.6, 816.6)
         setoff_pos = pos - np.array([8,0,0]) #positions relative to the sun
-        
+
     elif component == 'thick disk':
         pos = disk_pos(n, 0.9, 3.6, 209.5)
         setoff_pos = pos - np.array([8,0,0]) #positions relative to the sun
-    
+
     x_pos = setoff_pos[:,0]
     
     y_pos = setoff_pos[:,1]
@@ -548,7 +565,6 @@ def select_SNR(selected_DWDs, component):
 
     return selected_DWDs, selected_DWDs_SNR #save to file here
 
-
 def LISA_detectability(filenameofpopulation, M_component, component):
     
     '''Accessing all the data'''
@@ -580,6 +596,7 @@ def LISA_detectability(filenameofpopulation, M_component, component):
     '''Assigning ages'''
     pp_s_t = findtimes(pp_s, component)
     
+
     pp_s_t['age'].to_hdf(f"{component.replace(' ', '_')}_age_double_white_dwarfs_empirical.h5", 
                          key= f"{component.replace(' ', '_')}_age", mode='a') 
     pp_s = [] #clear memory
@@ -591,7 +608,8 @@ def LISA_detectability(filenameofpopulation, M_component, component):
     pp_s_t = [] #clear memory
     
     '''Calculating strain'''
-    pp_se_st = calc_strain(pp_se, component)
+
+    pp_se_st = calc_strain(pp_se)
                     
     pp_se = [] #clear memory
                     
@@ -614,9 +632,11 @@ def LISA_detectability(filenameofpopulation, M_component, component):
         
     return   N_DWD_pp, pp_sel, pp_sel_SNR 
 
+
 def results(M_component, component):
     
     DWD_types = ["HeHe", "HeCo", "CoCo", "ONeX"]
+
     if component in ['in situ halo', 'thick disk']:
         filenames = [hh_filename_10,coh_filename_10,coco_filename_10,oho_filename_10]
     elif component in "GSE halo":
@@ -641,6 +661,7 @@ def results(M_component, component):
         
         DWDdata.to_hdf(f"{component.replace(' ', '_')}_double_white_dwarfs_empirical.h5",
                        key=f"{DWD}_{component.replace(' ', '_')}", mode='a')
+
         
         print("Length of DWD's with SNR > 7 is " + str(len(DWDdata)), end='\n')
         
@@ -650,81 +671,9 @@ def results(M_component, component):
         
     N_DWD_df = pd.DataFrame(N_DWD_list, columns = ["N_DWD"])
     
+
     N_DWD_df.to_hdf(f"{component.replace(' ', '_')}_number_double_white_dwarfs_empirical.h5", key = "number_white_dwarfs")
     
-'''
-def results_alt(filenameofpopulation, M_component, component):
-    
-    print('The detectability for the ' + f"{component}" + ' is as follows:')
-    
-    N_DWD_list = []
-    
-    if fname in [hh_filename_1, hh_filename_14, hh_filename_9]:
-        
-        print("Helium DWDs" + " in " + f"{component}")
-        
-        N_DWD_hh, hh_data = LISA_detectability(fname, M_component, component)
-
-        hh_data.to_hdf(
-            f"{component.replace(' ', '_')}_double_white_dwarfs.h5" if ' ' in component else f"{component}_double_white_dwarfs.h5", key=f"HeHe_{component.replace(' ', '_')}", 
-            mode='a'
-        )
-        
-        N_DWD_list.append(N_DWD_hh)
-        
-        hh_data = []
-            
-    elif fname in [coh_filename_1, coh_filename_14, coh_filename_9]:
-    
-        print("CO and He DWDs" + ' in' + f"{component}")
-                  
-        N_DWD_coh, coh_data = LISA_detectability(fname, M_component, component)
-                  
-        coh_data.to_hdf(
-            f"{component.replace(' ', '_')}_double_white_dwarfs.h5" if ' ' in component else f"{component}_double_white_dwarfs.h5", key=f"CoHe_{component.replace(' ', '_')}", 
-            mode='a'
-        )
-        
-        N_DWD_list.append(N_DWD_coh)
-        
-        coh_data = [] #wipe out data
-            
-    elif fname in [coco_filename_1, coco_filename_14, coco_filename_9]:
-        print("CO and CO DWDs" + ' in' + f"{component}")
-            
-        N_DWD, coco_data = LISA_detectability(fname, M_component, component)
-        
-        #writing data of carbon_oxygen/carbon oxygen white dwarfs w/ SNR>7 to hdf5 file under specified key
-        coco_data.to_hdf(
-            f"{component.replace(' ', '_')}_double_white_dwarfs.h5" if ' ' in component else f"{component}_double_white_dwarfs.h5", key=f"CoCo_{component.replace(' ', '_')}", 
-            mode='a'
-        )
-        
-        N_DWD_list.append(N_DWD_coco)
-        
-        coco_data = [] #wipe out data
-          
-    elif filenamefpopulation in [oho_filename_1, oho_filename_14, oho_filename_9]:
-        print("One and  DWDs" + ' in' + f"{component}")
-        
-        N_DWD, oho_data = LISA_detectability(fname, M_component, component)
-        num_comp.append(N_DWD_oho_comp)
-        
-        #writing data of oxygen_neon/helium white dwarfs w/ SNR>7 to hdf5 file under specified key
-        
-        oho_data.to_hdf(
-            f"{component.replace(' ', '_')}_double_white_dwarfs.h5" if ' ' in component else f"{component}_double_white_dwarfs.h5", key=f"ONeX_{component.replace(' ', '_')}", 
-            mode='a'
-        )
-        
-        N_DWD_list.append(N_DWD_oho)
-        
-        oho_data = [] #wipe out data
-
-    N_DWD_df = pd.DataFrame(N_DWD_list, columns = ["N_DWD"])
-    
-    N_DWD_df.to_hdf(f"{component.replace(' ', '_')}_number_double_white_dwarfs.h5" if ' ' in component else f"{component}_number_double_white_dwarfs.h5", key = "number_white_dwarfs")
-'''                      
                        
 if __name__ == '__main__':
     
